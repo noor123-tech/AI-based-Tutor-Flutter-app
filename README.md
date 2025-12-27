@@ -1,6 +1,6 @@
 # AI English Tutor App
 
-A Flutter application designed to help users learn English through an AI-powered chat interface. This project focuses on providing a clean, modern, and user-friendly UI for an educational experience.
+A Flutter application designed to help users learn English through an AI-powered chat interface. This project focuses on providing a clean, modern, and user-friendly UI for an educational experience, powered by the Google Gemini API.
 
 ## Features
 
@@ -8,8 +8,9 @@ A Flutter application designed to help users learn English through an AI-powered
     *   **Login Screen**: Clean interface for users to sign in with email and password. Includes navigation to the Registration screen.
     *   **Registration Screen**: Sign-up form for new users to create an account.
 *   **AI Chat Interface**:
-    *   **Chat Screen**: A conversational interface where users can interact with the AI tutor.
-    *   **Chat Bubbles**: Distinct visual styles for user messages and AI responses.
+    *   **Real-time Interaction**: Integrated with Google Gemini API (`gemini-2.5-flash`) for responsive and intelligent tutoring.
+    *   **Context Aware**: System instructions ensure the AI stays focused on teaching English, correcting grammar, and providing vocabulary.
+    *   **Chat Bubbles**: Distinct visual styles for user messages and AI responses, including error handling displays.
     *   **Input Field**: Styled text field for typing messages.
 *   **Modern Design**:
     *   Custom color palette and gradients.
@@ -25,6 +26,7 @@ Follow these instructions to get a copy of the project up and running on your lo
 *   **Flutter SDK**: Ensure you have Flutter installed. You can check by running `flutter --version` in your terminal.
 *   **Dart SDK**: Included with Flutter.
 *   **IDE**: VS Code, Android Studio, or any editor of your choice with Flutter plugins.
+*   **Gemini API Key**: You need a valid API key from Google AI Studio.
 
 ### Installation
 
@@ -39,6 +41,16 @@ Follow these instructions to get a copy of the project up and running on your lo
     flutter pub get
     ```
 
+### Configuration (.env)
+
+This project uses `flutter_dotenv` to manage sensitive keys. You must create a `.env` file in the root directory.
+
+1.  Create a file named `.env` in the root of the project (same level as `pubspec.yaml`).
+2.  Add your Gemini API key to it:
+    ```env
+    GEMINI_API_KEY=your_api_key_here
+    ```
+
 ### Running the App
 
 To run the application on a connected device or emulator:
@@ -50,6 +62,10 @@ To run the application on a connected device or emulator:
     ```
     *   To run on Chrome (Web): `flutter run -d chrome`
 
+    *> **Note**: You must restart the app completely if you modify the `.env` file.*
+
+    *> **AI Model**: This app is configured to use **`gemini-2.5-flash`**. Ensure your API key has access to this model.*
+
 ## File Structure & Description
 
 Here is an overview of the key files and directories in the project:
@@ -57,37 +73,57 @@ Here is an overview of the key files and directories in the project:
 ### `lib/`
 The main source code directory.
 
-*   **`main.dart`**: The entry point of the application. Sets up the theme and loads the initial screen (Login).
-*   **`constants.dart`**: Contains application-wide constants such as color palettes (`AppColors`) and gradients (`primaryGradient`) to ensure design consistency.
+*   **`main.dart`**: The entry point. Initializes `flutter_dotenv`, sets up the theme, and loads the Login screen.
+*   **`constants.dart`**: Contains application-wide constants such as color palettes (`AppColors`) and gradients.
+
+### `lib/services/`
+*   **`gemini_service.dart`**: A singleton service class that handles all interactions with the Google Gemini API. It manages the `GenerativeModel`, applies system instructions for the "English Tutor" context, and handles API errors.
 
 ### `lib/screens/`
 Contains the full-page screens of the application.
 
-*   **`login_screen.dart`**: Handles the user login UI. Features a header with the app logo, email/password fields, and navigation to the Chat or Register screens.
-*   **`register_screen.dart`**: The registration page for new users. Includes fields for creating an account and a "Create Account" button.
-*   **`chat_screen.dart`**: The core feature screen. Displays the chat history between the user and the AI, along with the message input area. *Note: Currently uses placeholder data for demonstration.*
+*   **`login_screen.dart`**: Handles the user login UI.
+*   **`register_screen.dart`**: The registration page for new users.
+*   **`chat_screen.dart`**: The core feature screen. Displays the chat history and integrates with `GeminiService` to send user input and display AI responses.
 
 ### `lib/widgets/`
 Contains reusable UI components.
 
-*   **`custom_text_field.dart`**: A styled text input field used in the Login and Register screens. It supports password obscuring and custom labels/hints.
-*   **`chat_bubble.dart`**: A widget to display individual chat messages. It adapts its style (color, alignment) based on whether the message is from the user or the AI.
+*   **`custom_text_field.dart`**: A styled text input field used in Login/Register screens.
+*   **`chat_bubble.dart`**: A widget to display individual chat messages.
 
 ## Dependencies
 
 This project uses the following external packages:
 
 *   **`flutter`**: The core Flutter SDK.
-*   **`google_fonts`**: For using the 'Inter' font family throughout the app.
+*   **`google_fonts`**: For using the 'Inter' font family.
+*   **`google_generative_ai`**: For accessing the Gemini API (specifically using the `gemini-2.5-flash` model).
+*   **`flutter_dotenv`**: For loading environment variables from the `.env` file.
 *   **`cupertino_icons`**: For iOS-style icons.
 
 ## Troubleshooting
 
-*   **'flutter' is not recognized**: Ensure the Flutter bin directory is added to your system's PATH environment variable.
-*   **Dependencies not found**: Run `flutter pub get` again to ensure all packages are downloaded.
-*   **Emulator issues**: If the app doesn't launch, try running `flutter doctor` to diagnose environment issues.
+*   **Gemini API Error (404)**: Ensure your API key is valid and has access to the model specified in `gemini_service.dart`.
+*   **Assets not found (.env)**: If you get a "file not found" error for `.env`, ensuring it is listed in the `assets` section of `pubspec.yaml` (this is already configured).
+*   **'flutter' is not recognized**: Ensure the Flutter bin directory is in your PATH.
 
 ## Updates
 
-*   **New UI Implementation**: Complete implementation of the Login, Register, and Chat screens matching the design mockups.
-*   **Navigation**: Added basic navigation flow between Login -> Register and Login -> Chat.
+*   **Gemini Integration**: Replaced placeholder chat with real-time AI responses using `gemini-2.5-flash`.
+*   **New UI Implementation**: Complete implementation of Auth and Chat flows.
+
+## Implemented Functions
+
+Key functions and methods:
+
+*   **`GeminiService.sendMessage(String)`**: Sends the user's text to the Gemini model and returns the generated response. Handles exceptions gracefully.
+*   **`main()`**: Initializes `dotenv` asynchronously before running the app.
+*   **`ChatScreen` Logic**: Manages the list of messages state (`_messages`) and updates the UI upon receiving data from the service.
+
+## UI Components Used
+
+*   **`Scaffold`, `Column`, `Row`, `Container`, `Stack`**: Basic layout structure.
+*   **`ListView.builder`**: Efficiently scrolls through the chat history.
+*   **`TextField`**: Handles user input with a controller.
+*   **`LinearGradient`**: Provides the UI with a modern aesthetic. 

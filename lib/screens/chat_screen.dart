@@ -2,9 +2,81 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../constants.dart';
 import '../widgets/chat_bubble.dart';
+import '../services/gemini_service.dart';
 
-class ChatScreen extends StatelessWidget {
+class ChatScreen extends StatefulWidget {
   const ChatScreen({super.key});
+
+  @override
+  State<ChatScreen> createState() => _ChatScreenState();
+}
+
+class _ChatScreenState extends State<ChatScreen> {
+  final TextEditingController _controller = TextEditingController();
+  final ScrollController _scrollController = ScrollController();
+  final List<Map<String, dynamic>> _messages = [
+    {
+      "message": "Hello! I'm your English tutor. How can I help you improve your English today? \u{1F60A}",
+      "isUser": false,
+      "time": "9:30 AM",
+    },
+  ];
+  bool _isLoading = false;
+
+  void _sendMessage() async {
+    if (_controller.text.trim().isEmpty) return;
+
+    final userMessage = _controller.text;
+    final currentTime = TimeOfDay.now().format(context);
+
+    setState(() {
+      _messages.add({
+        "message": userMessage,
+        "isUser": true,
+        "time": currentTime,
+      });
+      _isLoading = true;
+    });
+    
+    _controller.clear();
+    _scrollToBottom();
+
+    try {
+      final response = await GeminiService().sendMessage(userMessage);
+      if (mounted) {
+        setState(() {
+          _messages.add({
+            "message": response,
+            "isUser": false,
+            "time": TimeOfDay.now().format(context),
+          });
+          _isLoading = false;
+        });
+        _scrollToBottom();
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Failed to get response')),
+          );
+        });
+      }
+    }
+  }
+
+  void _scrollToBottom() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (_scrollController.hasClients) {
+        _scrollController.animateTo(
+          _scrollController.position.maxScrollExtent,
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeOut,
+        );
+      }
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -71,30 +143,26 @@ class ChatScreen extends StatelessWidget {
           
           // Chat Area
           Expanded(
-            child: ListView(
+            child: ListView.builder(
+              controller: _scrollController,
               padding: const EdgeInsets.all(20),
-              children: const [
-                ChatBubble(
-                  message: "Hello! I'm your English tutor. How can I help you improve your English today? \u{1F60A}",
-                  isUser: false,
-                  time: "9:30 AM",
-                ),
-                ChatBubble(
-                  message: "Hi! Can you help me with the difference between 'affect' and 'effect'?",
-                  isUser: true,
-                  time: "9:31 AM",
-                ),
-                ChatBubble(
-                  message: "Great question! 'Affect' is usually a verb meaning to influence something. 'Effect' is usually a noun meaning the result. For example: 'The weather affects my mood' vs 'The effect of the weather on my mood'.",
-                  isUser: false,
-                  time: "9:31 AM",
-                ),
-                ChatBubble(
-                  message: "That makes sense! Can you give me another example?",
-                  isUser: true,
-                  time: "9:32 AM",
-                ),
-              ],
+              itemCount: _messages.length + (_isLoading ? 1 : 0),
+              itemBuilder: (context, index) {
+                if (index == _messages.length) {
+                  return const Center(
+                    child: Padding(
+                      padding: EdgeInsets.all(8.0),
+                      child: CircularProgressIndicator(),
+                    ),
+                  );
+                }
+                final msg = _messages[index];
+                return ChatBubble(
+                  message: msg['message'],
+                  isUser: msg['isUser'],
+                  time: msg['time'],
+                );
+              },
             ),
           ),
           
@@ -122,6 +190,8 @@ class ChatScreen extends StatelessWidget {
                       borderRadius: BorderRadius.circular(25),
                     ),
                     child: TextField(
+                      controller: _controller,
+                      onSubmitted: (_) => _sendMessage(),
                       decoration: InputDecoration(
                         hintText: 'Type your message...',
                         hintStyle: GoogleFonts.inter(
@@ -133,15 +203,17 @@ class ChatScreen extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(width: 12),
-                Container(
-                  width: 50,
-                  height: 50,
-                  decoration: const BoxDecoration(
-                    color: AppColors.textGrey, // Using grey as per image (looks like a dark grey icon button)
-                    // Wait, in the image it looks like a dark grey circle with a white send icon.
-                    shape: BoxShape.circle,
+                GestureDetector(
+                  onTap: _sendMessage,
+                  child: Container(
+                    width: 50,
+                    height: 50,
+                    decoration: const BoxDecoration(
+                      color: AppColors.textGrey, 
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(Icons.send, color: Colors.white, size: 20),
                   ),
-                  child: const Icon(Icons.send, color: Colors.white, size: 20),
                 ),
               ],
             ),
