@@ -126,4 +126,53 @@ Key functions and methods:
 *   **`Scaffold`, `Column`, `Row`, `Container`, `Stack`**: Basic layout structure.
 *   **`ListView.builder`**: Efficiently scrolls through the chat history.
 *   **`TextField`**: Handles user input with a controller.
-*   **`LinearGradient`**: Provides the UI with a modern aesthetic. 
+*   **`LinearGradient`**: Provides the UI with a modern aesthetic.
+
+# Project Code Deep Dive & Architecture Explained
+
+This section provides a detailed explanation of the project structure, code logic, and architectural decisions, specifically regarding State management and Widget usage.
+
+## 1. Folder Structure & Organization
+
+The codebase is organized into logical directories inside `lib/` to separate concerns:
+
+*   **`lib/screens/`**: Contains the full-page views (`LoginScreen`, `RegisterScreen`, `ChatScreen`). Each file represents a complete screen the user navigates to.
+*   **`lib/widgets/`**: Contains reusable UI components (`ChatBubble`, `CustomTextField`). These are smaller building blocks used within screens to ensure consistency and reusability.
+*   **`lib/services/`**: Contains business logic and external data handling (`GeminiService`), separating data fetching from UI code for better maintainability.
+
+## 2. File Implementation Details & Design Choices
+
+### `lib/screens/chat_screen.dart` (StatefulWidget)
+**Why StatefulWidget?**
+We chose `StatefulWidget` for the Chat Screen because it involves **interactive and dynamic data** that changes over time during the *same* screen view:
+1.  **Message History (`_messages`)**: The list of messages grows as you and the AI chat. We need `setState()` to tell Flutter to rebuild the UI whenever a new message is added to this list.
+2.  **Loading State (`_isLoading`)**: We need to toggle a loading indicator (spinner) ON when the request starts and OFF when the response arrives. This is a state change.
+3.  **Scroll Position (`_scrollController`)**: The chat view needs to programmatically scroll to the bottom when new messages arrive so the user sees the latest text.
+4.  **Text Input (`_controller`)**: We need to read the text field's value and clear it after sending.
+
+**Key Function Logic:**
+*   **`_sendMessage()`**: This is the core logic function.
+    1.  It first checks if the input is empty.
+    2.  It uses `setState` to immediately add the user's message to `_messages` so it appears on screen.
+    3.  It calls `GeminiService.sendMessage()` (asynchronous operation).
+    4.  While waiting, `_isLoading` is true, showing a visual indicator.
+    5.  When the result returns, it calls `setState` again to add the AI's response to `_messages` and turn off loading.
+
+### `lib/screens/login_screen.dart` & `register_screen.dart` (StatelessWidget)
+**Why StatelessWidget?**
+These screens are currently implemented as `StatelessWidget`.
+*   **Reasoning**: Their primary purpose is to display a form and navigate. In this specific implementation, they don't hold internal mutable state that requires a *local* redraw.
+*   **Navigation**: When you click "Sign In" or "Register", the app pushes a completely *new* screen (`ChatScreen`) onto the stack. It doesn't need to update the *current* screen's pixels.
+*   **Efficiency**: Stateless widgets are slightly lighter weight. Since we aren't validating fields in real-time with error messages that appear/disappear on *this* screen (in this version), `StatelessWidget` is the optimal choice.
+
+### `lib/widgets/chat_bubble.dart` (StatelessWidget)
+**Why Stateless?**
+This is a "pure" presentation component.
+*   **Logic**: It receives data (`message`, `isUser`, `time`) through its constructor and simply paints it on the screen.
+*   **Immutability**: The bubble itself doesn't change once drawn. If the data changes, the parent (`ChatScreen`) rebuilds and creates a *new* bubble with new data. This separation makes the component reusable and easy to test.
+
+### `lib/services/gemini_service.dart` (Singleton)
+**Why Singleton?**
+We used the Singleton pattern (`factory GeminiService() { return _instance; }`).
+*   **Purpose**: This ensures that only **one single instance** of the `GeminiService` class exists in the entire application lifecycle.
+*   **Benefit**: We don't want to re-load the API key from the `.env` file or re-initialize the `GenerativeModel` configuration every single time you tap the "Send" button. The Singleton initializes once and is reused, which is more efficient for resource management.
