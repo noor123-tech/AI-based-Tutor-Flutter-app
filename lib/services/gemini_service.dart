@@ -37,4 +37,16 @@ class GeminiService {
       return "Error: $e"; 
     }
   }
+
+  Future<String> getMoodAdvice(String mood) async {
+    try {
+      final prompt = "The user is feeling '$mood'. Give them a comforting or relevant Quranic Ayat (Verse) in English that fits this mood. Include the Surah name and Verse number. Keep it profound and brief. Do not add extra commentary, just the verse and reference.";
+      final content = [Content.text(prompt)];
+      final response = await _model.generateContent(content);
+      return response.text ?? "Verily, with hardship comes ease. (94:6)";
+    } catch (e) {
+      print('Gemini Mood API Error: $e');
+      return "SubhanAllah, please try again.";
+    }
+  }
 }

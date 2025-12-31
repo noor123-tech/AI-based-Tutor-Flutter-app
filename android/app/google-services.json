@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "392976308948",
+    "project_id": "ai-tutor-329f1",
+    "storage_bucket": "ai-tutor-329f1.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:392976308948:android:587d1d912579708b95f941",
+        "android_client_info": {
+          "package_name": "com.example.ai_english_tutor"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyB3g3PNQjrn6m3a0qB1LSjPrYy-e9tA5Bs"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

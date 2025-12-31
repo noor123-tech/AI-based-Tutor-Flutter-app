@@ -4,9 +4,70 @@ import '../constants.dart';
 import '../widgets/custom_text_field.dart';
 import 'login_screen.dart';
 import 'chat_screen.dart';
+import '../services/auth_service.dart';
 
-class RegisterScreen extends StatelessWidget {
+class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
+
+  @override
+  State<RegisterScreen> createState() => _RegisterScreenState();
+}
+
+class _RegisterScreenState extends State<RegisterScreen> {
+  final TextEditingController _nameController = TextEditingController();
+  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
+  final TextEditingController _confirmPasswordController = TextEditingController();
+  bool _isLoading = false;
+
+  Future<void> _register() async {
+    if (_nameController.text.isEmpty ||
+        _emailController.text.isEmpty ||
+        _passwordController.text.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please fill all fields')),
+      );
+      return;
+    }
+
+    if (_passwordController.text != _confirmPasswordController.text) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Passwords do not match')),
+      );
+      return;
+    }
+
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      await AuthService().signUp(
+        email: _emailController.text.trim(),
+        password: _passwordController.text.trim(),
+        fullName: _nameController.text.trim(),
+      );
+
+      if (mounted) {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const ChatScreen()),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error: $e')),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -66,26 +127,30 @@ class RegisterScreen extends StatelessWidget {
               const SizedBox(height: 32),
               
               // Form
-              const CustomTextField(
+              CustomTextField(
                 label: 'Full Name',
                 hint: 'Enter your full name',
+                controller: _nameController,
               ),
               const SizedBox(height: 20),
-              const CustomTextField(
+              CustomTextField(
                 label: 'Email Address',
                 hint: 'your.email@example.com',
+                controller: _emailController,
               ),
               const SizedBox(height: 20),
-              const CustomTextField(
+              CustomTextField(
                 label: 'Password',
                 hint: 'Create a strong password',
                 isPassword: true,
+                controller: _passwordController,
               ),
               const SizedBox(height: 20),
-              const CustomTextField(
+              CustomTextField(
                 label: 'Confirm Password',
                 hint: 'Confirm your password',
                 isPassword: true,
+                controller: _confirmPasswordController,
               ),
               const SizedBox(height: 32),
               
@@ -94,12 +159,7 @@ class RegisterScreen extends StatelessWidget {
                 width: double.infinity,
                 height: 56,
                 child: ElevatedButton(
-                  onPressed: () {
-                    Navigator.pushReplacement(
-                      context,
-                      MaterialPageRoute(builder: (context) => const ChatScreen()),
-                    );
-                  },
+                  onPressed: _isLoading ? null : _register,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.buttonBlack,
                     shape: RoundedRectangleBorder(
@@ -107,21 +167,23 @@ class RegisterScreen extends StatelessWidget {
                     ),
                     elevation: 0,
                   ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text(
-                        'Create Account',
-                        style: GoogleFonts.inter(
-                          color: Colors.white,
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
+                  child: _isLoading
+                      ? const CircularProgressIndicator(color: Colors.white)
+                      : Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Text(
+                              'Create Account',
+                              style: GoogleFonts.inter(
+                                color: Colors.white,
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            const Icon(Icons.arrow_forward, color: Colors.white, size: 20),
+                          ],
                         ),
-                      ),
-                      const SizedBox(width: 8),
-                      const Icon(Icons.arrow_forward, color: Colors.white, size: 20),
-                    ],
-                  ),
                 ),
               ),
               

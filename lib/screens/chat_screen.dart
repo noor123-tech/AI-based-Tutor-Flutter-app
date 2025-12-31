@@ -3,6 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../constants.dart';
 import '../widgets/chat_bubble.dart';
 import '../services/gemini_service.dart';
+import 'mood_screen.dart';
 
 class ChatScreen extends StatefulWidget {
   const ChatScreen({super.key});
@@ -95,18 +96,11 @@ class _ChatScreenState extends State<ChatScreen> {
                 Container(
                   width: 40,
                   height: 40,
-                  decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.2),
+                  decoration: const BoxDecoration(
                     shape: BoxShape.circle,
-                  ),
-                  child: Center(
-                    child: Text(
-                      'AI',
-                      style: GoogleFonts.inter(
-                        color: Colors.white,
-                        fontSize: 14,
-                        fontWeight: FontWeight.bold,
-                      ),
+                    image: DecorationImage(
+                      image: AssetImage('assests/student_avatar.png'),
+                      fit: BoxFit.cover,
                     ),
                   ),
                 ),
@@ -133,13 +127,23 @@ class _ChatScreenState extends State<ChatScreen> {
                     ],
                   ),
                 ),
-                IconButton(
-                  icon: const Icon(Icons.more_vert, color: Colors.white),
-                  onPressed: () {},
-                ),
-              ],
+                  IconButton(
+                    icon: const Icon(Icons.psychology, color: Colors.white),
+                    tooltip: 'Mood Advice',
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => MoodScreen()),
+                      );
+                    },
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.more_vert, color: Colors.white),
+                    onPressed: () {},
+                  ),
+                ],
+              ),
             ),
-          ),
           
           // Chat Area
           Expanded(

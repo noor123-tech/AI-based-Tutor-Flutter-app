@@ -29,16 +29,9 @@ class ChatBubble extends StatelessWidget {
               height: 32,
               decoration: const BoxDecoration(
                 shape: BoxShape.circle,
-                gradient: primaryGradient,
-              ),
-              child: Center(
-                child: Text(
-                  'AI',
-                  style: GoogleFonts.inter(
-                    color: Colors.white,
-                    fontSize: 12,
-                    fontWeight: FontWeight.bold,
-                  ),
+                image: DecorationImage(
+                  image: AssetImage('assests/user_avatar.jpg'),
+                  fit: BoxFit.cover,
                 ),
               ),
             ),
@@ -80,6 +73,20 @@ class ChatBubble extends StatelessWidget {
               ],
             ),
           ),
+          if (isUser) ...[
+            const SizedBox(width: 8),
+            Container(
+              width: 32,
+              height: 32,
+              decoration: const BoxDecoration(
+                shape: BoxShape.circle,
+                image: DecorationImage(
+                  image: AssetImage('assests/student_avatar.png'),
+                  fit: BoxFit.cover,
+                ),
+              ),
+            ),
+          ],
         ],
       ),
     );

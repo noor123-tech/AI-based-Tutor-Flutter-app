@@ -4,9 +4,58 @@ import '../constants.dart';
 import '../widgets/custom_text_field.dart';
 import 'register_screen.dart';
 import 'chat_screen.dart';
+import '../services/auth_service.dart';
 
-class LoginScreen extends StatelessWidget {
+class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
+
+  @override
+  State<LoginScreen> createState() => _LoginScreenState();
+}
+
+class _LoginScreenState extends State<LoginScreen> {
+  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
+  bool _isLoading = false;
+
+  Future<void> _login() async {
+    if (_emailController.text.isEmpty || _passwordController.text.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please fill all fields')),
+      );
+      return;
+    }
+
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      await AuthService().signIn(
+        email: _emailController.text.trim(),
+        password: _passwordController.text.trim(),
+      );
+
+      if (mounted) {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const ChatScreen()),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error: $e')),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -32,18 +81,11 @@ class LoginScreen extends StatelessWidget {
                   Container(
                     width: 80,
                     height: 80,
-                    decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.2),
+                    decoration: const BoxDecoration(
                       shape: BoxShape.circle,
-                    ),
-                    child: Center(
-                      child: Text(
-                        'AI',
-                        style: GoogleFonts.inter(
-                          color: Colors.white,
-                          fontSize: 24,
-                          fontWeight: FontWeight.bold,
-                        ),
+                      image: DecorationImage(
+                        image: AssetImage('assests/student_avatar.png'),
+                        fit: BoxFit.cover,
                       ),
                     ),
                   ),
@@ -91,15 +133,17 @@ class LoginScreen extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 32),
-                  const CustomTextField(
+                  CustomTextField(
                     label: 'Email',
                     hint: 'your@email.com',
+                    controller: _emailController,
                   ),
                   const SizedBox(height: 20),
-                  const CustomTextField(
+                  CustomTextField(
                     label: 'Password',
                     hint: '••••••••',
                     isPassword: true,
+                    controller: _passwordController,
                   ),
                   const SizedBox(height: 40),
                   
@@ -135,51 +179,12 @@ class LoginScreen extends StatelessWidget {
                     ),
                   ),
                   
-                  // Hidden button to navigate to Chat for demo purposes
                   const SizedBox(height: 20),
-                  Center(
-                    child: ElevatedButton(
-                      onPressed: () {
-                         Navigator.pushReplacement(
-                              context,
-                              MaterialPageRoute(builder: (context) => const ChatScreen()),
-                            );
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.transparent,
-                        shadowColor: Colors.transparent,
-                      ),
-                       child: const Text(""), // Invisible button area to click through if needed, but user asked for design only. 
-                       // Actually, let's make the "Sign in" logic triggered by a button or just make the whole form static?
-                       // The user said "make sure i can register and login without saving anything... just the design".
-                       // I should probably add a "Sign In" button even if it wasn't explicitly clear in the "Welcome back" screenshot, 
-                       // but usually there is one. 
-                       // Looking at the screenshot... I don't see a "Sign In" button on the Login screen! 
-                       // Wait, let me re-examine the image.
-                       // The Login screen (middle) shows Email, Password, and then "Don't have an account? Sign up".
-                       // It DOES NOT show a big black "Sign In" button like the "Create Account" button on the right.
-                       // This is strange. Maybe it's scrolled down? Or maybe the "Sign up" is the action?
-                       // No, "Sign up" is a link.
-                       // I will assume there IS a button below the fold or I should add one for usability, 
-                       // BUT the user said "same design".
-                       // However, without a button, you can't "login".
-                       // I will add a "Sign In" button similar to the "Create Account" button but maybe keep it consistent.
-                       // OR, I will just make the "Sign up" link work, and maybe add a hidden way or just a visible "Sign In" button 
-                       // that matches the style of the "Create Account" button, assuming it's just cut off.
-                       // Actually, looking at the "Registration" screen, the button is very prominent.
-                       // I'll add a "Sign In" button to the Login screen to make it functional as requested ("make sure i can register and login").
-                    ),
-                  ),
                    SizedBox(
                     width: double.infinity,
                     height: 56,
                     child: ElevatedButton(
-                      onPressed: () {
-                        Navigator.pushReplacement(
-                          context,
-                          MaterialPageRoute(builder: (context) => const ChatScreen()),
-                        );
-                      },
+                      onPressed: _isLoading ? null : _login,
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppColors.buttonBlack,
                         shape: RoundedRectangleBorder(
@@ -187,21 +192,23 @@ class LoginScreen extends StatelessWidget {
                         ),
                         elevation: 0,
                       ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Text(
-                            'Sign In',
-                            style: GoogleFonts.inter(
-                              color: Colors.white,
-                              fontSize: 16,
-                              fontWeight: FontWeight.w600,
+                      child: _isLoading
+                          ? const CircularProgressIndicator(color: Colors.white)
+                          : Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Text(
+                                  'Sign In',
+                                  style: GoogleFonts.inter(
+                                    color: Colors.white,
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                const Icon(Icons.arrow_forward, color: Colors.white, size: 20),
+                              ],
                             ),
-                          ),
-                          const SizedBox(width: 8),
-                          const Icon(Icons.arrow_forward, color: Colors.white, size: 20),
-                        ],
-                      ),
                     ),
                   ),
                 ],
